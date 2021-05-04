@@ -1,0 +1,149 @@
+<?php declare(strict_types=1);
+
+namespace Lof\Webp2\Convertor;
+
+use Magento\Framework\Filesystem\Driver\File as FileDriver;
+use Magento\Framework\Filesystem\File\ReadFactory as FileReadFactory;
+use WebPConvert\Convert\Exceptions\ConversionFailedException;
+use Lof\NextGenImages\Convertor\ConvertorInterface;
+use Lof\NextGenImages\Exception\ConvertorException;
+use Lof\NextGenImages\Image\File;
+use Lof\NextGenImages\Image\SourceImage;
+use Lof\NextGenImages\Image\SourceImageFactory;
+use Lof\NextGenImages\Logger\Debugger;
+use Lof\Webp2\Config\Config;
+use Lof\Webp2\Image\ConvertWrapper;
+
+class Convertor implements ConvertorInterface
+{
+    /**
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * @var SourceImageFactory
+     */
+    private $sourceImageFactory;
+
+    /**
+     * @var File
+     */
+    private $imageFile;
+
+    /**
+     * @var ConvertWrapper
+     */
+    private $convertWrapper;
+
+    /**
+     * @var FileReadFactory
+     */
+    private $fileReadFactory;
+
+    /**
+     * @var Debugger
+     */
+    private $debugger;
+
+    /**
+     * @var FileDriver
+     */
+    private $fileDriver;
+
+    /**
+     * Convertor constructor.
+     * @param Config $config
+     * @param SourceImageFactory $sourceImageFactory
+     * @param File $imageFile
+     * @param ConvertWrapper $convertWrapper
+     * @param FileReadFactory $fileReadFactory
+     * @param Debugger $debugger
+     * @param FileDriver $fileDriver
+     */
+    public function __construct(
+        Config $config,
+        SourceImageFactory $sourceImageFactory,
+        File $imageFile,
+        ConvertWrapper $convertWrapper,
+        FileReadFactory $fileReadFactory,
+        Debugger $debugger,
+        FileDriver $fileDriver
+    ) {
+        $this->config = $config;
+        $this->sourceImageFactory = $sourceImageFactory;
+        $this->imageFile = $imageFile;
+        $this->convertWrapper = $convertWrapper;
+        $this->fileReadFactory = $fileReadFactory;
+        $this->debugger = $debugger;
+        $this->fileDriver = $fileDriver;
+    }
+
+    /**
+     * @param string $imageUrl
+     * @return SourceImage
+     * @throws ConvertorException
+     * @deprecated Use getSourceImage() instead
+     */
+    public function convertByUrl(string $imageUrl): SourceImage
+    {
+        return $this->getSourceImage($imageUrl);
+    }
+
+    /**
+     * @param string $imageUrl
+     * @return SourceImage
+     * @throws ConvertorException
+     */
+    public function getSourceImage(string $imageUrl): SourceImage
+    {
+        if (!$this->config->enabled()) {
+            throw new ConvertorException('WebP conversion is not enabled');
+        }
+
+        $webpUrl = $this->imageFile->convertSuffix($imageUrl, '.webp');
+        $result = $this->convert($imageUrl, $webpUrl);
+
+        if (!$result && !$this->imageFile->uriExists($webpUrl)) {
+            throw new ConvertorException('WebP URL "' . $webpUrl . '" does not exist after conversion');
+        }
+
+        return $this->sourceImageFactory->create(['url' => $webpUrl, 'mimeType' => 'image/webp']);
+    }
+
+    /**
+     * @param string $sourceImageUri
+     * @param string|null $destinationImageUri
+     * @return bool
+     * @throws ConvertorException
+     */
+    public function convert(string $sourceImageUri, ?string $destinationImageUri = null): bool
+    {
+        if (!$destinationImageUri) {
+            $destinationImageUri = preg_replace('/\.(jpg|jpeg|png|gif)$/', '.webp', $sourceImageUri);
+        }
+
+        $sourceImageFilename = $this->imageFile->resolve($sourceImageUri);
+        $destinationImageFilename = $this->imageFile->resolve($destinationImageUri);
+
+        if(!$this->imageFile->fileExists($sourceImageFilename)) {
+            throw new ConvertorException('Source cached image does not exists ' . $sourceImageUri);
+        }
+        
+        if (!$this->imageFile->needsConversion($sourceImageFilename, $destinationImageFilename)) {
+            return true;
+        }
+
+        if (!$this->config->enabled()) {
+            throw new ConvertorException('WebP conversion is not enabled');
+        }
+
+        try {
+            $this->convertWrapper->convert($sourceImageFilename, $destinationImageFilename);
+        } catch (ConversionFailedException $e) {
+            throw new ConvertorException($destinationImageFilename . ': ' . $e->getMessage());
+        }
+
+        return true;
+    }
+}

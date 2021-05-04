@@ -1,0 +1,17 @@
+<?php
+declare(strict_types=1);
+
+/** @var $block \Magento\Framework\View\Element\Template */
+/** @var $imageProvider \Lof\Webp2\Test\Utils\ImageProvider */
+$imageProvider = $block->getImageProvider();
+$image = $imageProvider->getImage();
+$imageUrl = $block->escapeUrl($block->getViewFileUrl('Lof_Webp2/' . $image));
+?>
+
+<h1><?= /* @noEscape */ $block->getNameInLayout() ?></h1>
+
+<img class="alt-img" src="<?= /* @noEscape */ $imageUrl ?>" alt="test sample" style="display:insane; opacity:666;">
+
+<pre>
+    <?= implode(', ', /* @noEscape */ $block->getLayout()->getUpdate()->getHandles()); ?>
+</pre>
