@@ -11,14 +11,7 @@ This module adds WebP support to Magento 2. Currently, it ships with the followi
 ## Requesting support
 Feel free to open an **Issue** here on GitHub. However, do make sure to be thorough. See [SUPPORT.md](SUPPORT.md) for further details.
 
-- The module was forked from [Yireo_Webp2](https://github.com/yireo/Yireo_Webp2) to update features and fix issues.
-
-## Donation
-
-If this project help you reduce time to develop, you can give me a cup of coffee :) 
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/paypalme/allorderdesk)
-
+- The module was forked from [Yireo_Webp2](https://github.com/yireo/Yireo_Webp2) to update features which compatible for our extensions and fix issues.
 
 **Our Magento 2 Extensions List**
 * [Megamenu for Magento 2](https://landofcoder.com/magento-2-mega-menu-pro.html/)
