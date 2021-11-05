@@ -26,6 +26,8 @@
             <settings>
                 <enabled>1</enabled>
                 <quality_level>80</quality_level>
+                <convertors>cwebp,gd,imagick,wpc,ewww</convertors>
+                <encoding>lossy</encoding>
             </settings>
         </lof_webp2>
     </default>

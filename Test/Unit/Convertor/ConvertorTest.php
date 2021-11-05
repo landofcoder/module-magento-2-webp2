@@ -12,7 +12,7 @@ use Lof\NextGenImages\Image\SourceImageFactory;
 use Lof\NextGenImages\Logger\Debugger;
 use Lof\Webp2\Config\Config;
 use Lof\Webp2\Convertor\Convertor;
-use Lof\Webp2\Image\ConvertWrapper;
+use Lof\Webp2\Convertor\ConvertWrapper;
 
 class ConvertorTest extends TestCase
 {
@@ -35,16 +35,8 @@ class ConvertorTest extends TestCase
     public function testConvert()
     {
         $convertor = $this->getConvertor();
-        $this->assertFalse($convertor->convert('/images/test.jpg', '/images/test.webp'));
-    }
-
-    /**
-     * Test for Lof\Webp2\Convertor\Convertor::urlExists
-     */
-    public function testUrlExists()
-    {
-        $convertor = $this->getConvertor();
-        $this->assertFalse($convertor->urlExists('http://localhost/test.webp'));
+        $this->expectException(ConvertorException::class);
+        $convertor->convert('/images/test.jpg', '/images/test.webp');
     }
 
     /**

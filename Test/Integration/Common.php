@@ -9,7 +9,7 @@ use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\View\LayoutInterface;
 use Magento\TestFramework\TestCase\AbstractController;
 use RuntimeException;
-use Lof\Webp2\Image\ConvertWrapper;
+use Lof\Webp2\Convertor\ConvertWrapper;
 use Lof\Webp2\Test\Utils\ImageProvider;
 use Lof\Webp2\Test\Utils\ConvertWrapperStub;
 
@@ -70,8 +70,9 @@ class Common extends AbstractController
 
     /**
      * @param string $body
+     * @param array $images
      */
-    protected function assertImageTagsExist(string $body, $images)
+    protected function assertImageTagsExist(string $body, array $images)
     {
         foreach ($images as $image) {
             $webPImage = preg_replace('/\.(png|jpg)$/', '.webp', $image);

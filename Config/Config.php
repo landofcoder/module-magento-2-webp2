@@ -4,7 +4,11 @@ declare(strict_types=1);
 namespace Lof\Webp2\Config;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Lof\Webp2\Exception\InvalidConvertorException;
 
 class Config implements ArgumentInterface
 {
@@ -14,14 +18,22 @@ class Config implements ArgumentInterface
     private $scopeConfig;
 
     /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
      * Config constructor.
      *
      * @param ScopeConfigInterface $scopeConfig
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
-        ScopeConfigInterface $scopeConfig
+        ScopeConfigInterface $scopeConfig,
+        StoreManagerInterface $storeManager
     ) {
         $this->scopeConfig = $scopeConfig;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -29,7 +41,7 @@ class Config implements ArgumentInterface
      */
     public function enabled(): bool
     {
-        return (bool)$this->scopeConfig->getValue('lof_webp2/settings/enabled');
+        return (bool)$this->getValue('lof_webp2/settings/enabled');
     }
 
     /**
@@ -37,7 +49,7 @@ class Config implements ArgumentInterface
      */
     public function getQualityLevel(): int
     {
-        $qualityLevel = (int)$this->scopeConfig->getValue('lof_webp2/settings/quality_level');
+        $qualityLevel = (int)$this->getValue('lof_webp2/settings/quality_level');
         if ($qualityLevel > 100) {
             return 100;
         }
@@ -51,9 +63,77 @@ class Config implements ArgumentInterface
 
     /**
      * @return string[]
+     * @throws InvalidConvertorException
      */
     public function getConvertors(): array
     {
-        return ['cwebp', 'gd', 'imagick', 'wpc', 'ewww'];
+        $allConvertors = ['cwebp', 'gd', 'imagick', 'wpc', 'ewww'];
+        $storedConvertors = $this->getValue('lof_webp2/settings/convertors');
+        $storedConvertors = $this->stringToArray((string)$storedConvertors);
+        if (empty($storedConvertors)) {
+            return $allConvertors;
+        }
+
+        foreach ($storedConvertors as $storedConvertor) {
+            if (!in_array($storedConvertor, $allConvertors)) {
+                throw new InvalidConvertorException('Invalid convertor: "' . $storedConvertor . '"');
+            }
+        }
+
+        return $storedConvertors;
+    }
+
+    /**
+     * @return string
+     * @throws InvalidConvertorException
+     */
+    public function getEncoding(): string
+    {
+        $allEncoding = ['lossy', 'lossless', 'auto'];
+        $storedEncoding = (string)$this->getValue('lof_webp2/settings/encoding');
+        if (empty($storedEncoding)) {
+            return 'lossy';
+        }
+
+        if (!in_array($storedEncoding, $allEncoding)) {
+            throw new InvalidConvertorException('Invalid encoding: "' . $storedEncoding . '"');
+        }
+
+        return $storedEncoding;
+    }
+
+    /**
+     * @param string $path
+     * @return mixed
+     */
+    private function getValue(string $path)
+    {
+        try {
+            return $this->scopeConfig->getValue(
+                $path,
+                ScopeInterface::SCOPE_STORE,
+                $this->storeManager->getStore()
+            );
+        } catch (NoSuchEntityException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param string $string
+     * @return array
+     */
+    private function stringToArray(string $string): array
+    {
+        $array = [];
+        $strings = explode(',', $string);
+        foreach ($strings as $string) {
+            $string = trim($string);
+            if ($string) {
+                $array[] = $string;
+            }
+        }
+
+        return $array;
     }
 }

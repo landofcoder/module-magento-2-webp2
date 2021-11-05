@@ -2,8 +2,11 @@
 
 namespace Lof\Webp2\Convertor;
 
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Filesystem\Driver\File as FileDriver;
 use Magento\Framework\Filesystem\File\ReadFactory as FileReadFactory;
+use WebPConvert\Convert\Exceptions\ConversionFailed\InvalidInput\InvalidImageTypeException;
 use WebPConvert\Convert\Exceptions\ConversionFailedException;
 use Lof\NextGenImages\Convertor\ConvertorInterface;
 use Lof\NextGenImages\Exception\ConvertorException;
@@ -12,7 +15,8 @@ use Lof\NextGenImages\Image\SourceImage;
 use Lof\NextGenImages\Image\SourceImageFactory;
 use Lof\NextGenImages\Logger\Debugger;
 use Lof\Webp2\Config\Config;
-use Lof\Webp2\Image\ConvertWrapper;
+use Lof\Webp2\Exception\InvalidConvertorException;
+use WebPConvert\Exceptions\InvalidInput\InvalidImageTypeException as InvalidInputImageTypeException;
 
 class Convertor implements ConvertorInterface
 {
@@ -83,6 +87,8 @@ class Convertor implements ConvertorInterface
      * @param string $imageUrl
      * @return SourceImage
      * @throws ConvertorException
+     * @throws FileSystemException
+     * @throws NoSuchEntityException
      * @deprecated Use getSourceImage() instead
      */
     public function convertByUrl(string $imageUrl): SourceImage
@@ -94,6 +100,8 @@ class Convertor implements ConvertorInterface
      * @param string $imageUrl
      * @return SourceImage
      * @throws ConvertorException
+     * @throws FileSystemException
+     * @throws NoSuchEntityException
      */
     public function getSourceImage(string $imageUrl): SourceImage
     {
@@ -126,10 +134,10 @@ class Convertor implements ConvertorInterface
         $sourceImageFilename = $this->imageFile->resolve($sourceImageUri);
         $destinationImageFilename = $this->imageFile->resolve($destinationImageUri);
 
-        if(!$this->imageFile->fileExists($sourceImageFilename)) {
+        if (!$this->imageFile->fileExists($sourceImageFilename)) {
             throw new ConvertorException('Source cached image does not exists ' . $sourceImageUri);
         }
-        
+
         if (!$this->imageFile->needsConversion($sourceImageFilename, $destinationImageFilename)) {
             return true;
         }
@@ -140,7 +148,9 @@ class Convertor implements ConvertorInterface
 
         try {
             $this->convertWrapper->convert($sourceImageFilename, $destinationImageFilename);
-        } catch (ConversionFailedException $e) {
+        } catch (InvalidImageTypeException | InvalidInputImageTypeException $e) {
+            return false;
+        } catch (ConversionFailedException | InvalidConvertorException $e) {
             throw new ConvertorException($destinationImageFilename . ': ' . $e->getMessage());
         }
 
