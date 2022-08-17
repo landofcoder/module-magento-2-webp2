@@ -8,6 +8,13 @@ This module adds WebP support to Magento 2. Currently, it ships with the followi
 - [Support](SUPPORT.md)
 - [TODO](TODO.md)
 
+## Installation
+
+Composer install:
+```
+composer require landofcoder/module-webp2
+```
+
 ## Requesting support
 Feel free to open an **Issue** here on GitHub. However, do make sure to be thorough. See [SUPPORT.md](SUPPORT.md) for further details.
 
